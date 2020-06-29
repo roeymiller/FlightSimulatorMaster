@@ -27,7 +27,6 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import model.SimulatorModel;
-import model.interpreter.commands.ConnectCommand;
 import javafx.stage.FileChooser.ExtensionFilter;
 
 import java.io.*;
@@ -97,6 +96,7 @@ public class FlightController implements Initializable, Observer {
     
     private BooleanProperty path;
 	public BooleanProperty isConnectedToSimulator;
+	private boolean mapOn=false;
 
 
     //Data binding between View and the ViewModel 
@@ -105,12 +105,10 @@ public class FlightController implements Initializable, Observer {
         throttle.valueProperty().bindBidirectional(viewModel.throttle);
         rudder.valueProperty().bindBidirectional(viewModel.rudder);
         joystickController = new JoystickController(Joystick, border, rudder, throttle,viewModel);
-        viewModel.aileron.bind(joystickController.aileron);
-        viewModel.elevator.bind(joystickController.elevator);
         aileron=new SimpleDoubleProperty();
         elevator=new SimpleDoubleProperty();
-        //aileron.bindBidirectional(viewModel.aileron);
-        //elevator.bindBidirectional(viewModel.elevator);
+        viewModel.aileron.bindBidirectional(joystickController.aileron);
+        viewModel.elevator.bindBidirectional(joystickController.elevator);
         airplaneX=new SimpleDoubleProperty();
         airplaneY=new SimpleDoubleProperty();
         startX=new SimpleDoubleProperty();
@@ -133,6 +131,7 @@ public class FlightController implements Initializable, Observer {
         path.setValue(false);
 		logBar.setEditable(false);
 		isConnectedToSimulator = new SimpleBooleanProperty();
+		isConnectedToSimulator.set(false);
         plane=new Image[8];
         try {
             plane[0]=new Image(new FileInputStream("./resources/plane0.png"));
@@ -143,18 +142,20 @@ public class FlightController implements Initializable, Observer {
             plane[5]=new Image(new FileInputStream("./resources/plane225.png"));
             plane[6]=new Image(new FileInputStream("./resources/plane270.png"));
             plane[7]=new Image(new FileInputStream("./resources/plane315.png"));
-            mark=new Image(new FileInputStream("./resources/mark1.png"));
+            mark=new Image(new FileInputStream("./resources/mark.png"));
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
+    @FXML
     //Load the map 
     public void LoadMap() {
 		FileChooser fc = new FileChooser();
-		fc.setTitle("Load File to interpret automatically");
+		fc.setTitle("Load MAP");
 		fc.setInitialDirectory(new File("./Resources"));
-		fc.setSelectedExtensionFilter(new ExtensionFilter("Text Files", "*.txt"));
+		FileChooser.ExtensionFilter fileExtensions = new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv");
+		fc.getExtensionFilters().add(fileExtensions);
 		File selectedFile = fc.showOpenDialog(null);
 		
         if (selectedFile != null) {
@@ -189,6 +190,7 @@ public class FlightController implements Initializable, Observer {
                 this.drawAirplane();
                 map.setMapData(mapData);
                 logBar.appendText("Map loaded succesfully!\n");
+                mapOn=true;
 
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -197,6 +199,7 @@ public class FlightController implements Initializable, Observer {
             }
         }
     }
+    @FXML
     //Connect to FlightGear simulator
     public void Connect(){
 		Stage window = new Stage();
@@ -256,6 +259,7 @@ public class FlightController implements Initializable, Observer {
 		});
 
     }
+    @FXML
     //Connect to Solver and calculate the shortest path
     public void CalculatePath(){
     	Stage window = new Stage();
@@ -313,48 +317,99 @@ public class FlightController implements Initializable, Observer {
 				logBar.appendText("Invalid parameters!\n");}
 		});
     }
+    @FXML
     //Set Autopilot ON
     public void AutoPilot(){
-    	FileChooser fc = new FileChooser();
-		fc.setTitle("Load File to interpret automatically");
-		fc.setInitialDirectory(new File("./Resources"));
-		fc.setSelectedExtensionFilter(new ExtensionFilter("Text Files", "*.txt"));
-		File selectedFile = fc.showOpenDialog(null);
-		try {
-			if (selectedFile != null) {
-				Scanner sc = new Scanner(selectedFile); // Display chosen file in text area
-				while (sc.hasNextLine()) {
-					TextArea.appendText(sc.nextLine());
-					TextArea.appendText("\n");
-				}
-				//sc.close();
-				//fileName.setValue(selectedFile.getName());
-				viewModel.parse();
-			}
-		} catch (FileNotFoundException e) {e.getStackTrace();}
-    	//Select("auto");
     	if(manual.isSelected())
         {
             manual.setSelected(false);
             joystickController.manual=false;
             auto.setSelected(true);
+            this.TextArea.deleteText(0,TextArea.getLength());
+            
+    		FileChooser fc = new FileChooser();
+			fc.setTitle("Load Script File to interpret automatically");
+			fc.setInitialDirectory(new File("./Resources"));
+			FileChooser.ExtensionFilter fileExtensions = new FileChooser.ExtensionFilter("TEXT files (*.txt)", "*.txt");
+			fc.getExtensionFilters().add(fileExtensions);
+			File selectedFile = fc.showOpenDialog(null);
+			try {
+				if (selectedFile != null) {
+					Scanner sc = new Scanner(selectedFile); // Display chosen file in text area
+					while (sc.hasNextLine()) {
+						TextArea.appendText(sc.nextLine());
+						TextArea.appendText("\n");
+					}
+					sc.close();
+					viewModel.parse();	
+				}
+			} catch (FileNotFoundException e) {e.getStackTrace();}
+    	
 
+        	logBar.appendText("Autopilot Mode Activated!\n");
         }
-        viewModel.execute();
-    	logBar.appendText("Autopilot Mode Activated!\n");
+        else if(auto.isSelected())
+        {
+            this.TextArea.deleteText(0,TextArea.getLength());
+	    	FileChooser fc = new FileChooser();
+			fc.setTitle("Load Script File to interpret automatically");
+			fc.setInitialDirectory(new File("./Resources"));
+			FileChooser.ExtensionFilter fileExtensions = new FileChooser.ExtensionFilter("TEXT files (*.txt)", "*.txt");
+			fc.getExtensionFilters().add(fileExtensions);
+			File selectedFile = fc.showOpenDialog(null);
+			try {
+				if (selectedFile != null) {
+					Scanner sc = new Scanner(selectedFile); // Display chosen file in text area
+					while (sc.hasNextLine()) {
+						TextArea.appendText(sc.nextLine());
+						TextArea.appendText("\n");
+					}
+					sc.close();
+					viewModel.parse();	
+				}
+			} catch (FileNotFoundException e) {e.getStackTrace();}
+    	
+        	auto.setSelected(true);
+        	if(isConnectedToSimulator.getValue()) {
+		        viewModel.execute();
+	            logBar.appendText("Autopilot Mode Activated !\n");
+        	}
+        	else{
+        		Connect();
+        		logBar.appendText("You need to connect to FlightGear!\n");
+        	}
+        		
+        }
+        else {
+	        auto.setSelected(false);
+	        viewModel.stopAutoPilot();
+	        logBar.appendText("Autopilot Mode diActivated!\n");
+        }
     }
+    @FXML
     //Set Manual Joystick ON
     public void Manual()
     {
-        //Select("manual");
         if(auto.isSelected())
         {
             auto.setSelected(false);
             manual.setSelected(true);
             joystickController.manual=true;
             viewModel.stopAutoPilot();
+            logBar.appendText("Manual Mode Activated !\n");
         }
-        logBar.appendText("Manual Mode Activated !\n");
+        else if(manual.isSelected())
+        {
+            manual.setSelected(true);
+            joystickController.manual=true;
+            logBar.appendText("Manual Mode Activated !\n");
+        }
+        else {
+            manual.setSelected(false);
+            joystickController.manual=false;
+            logBar.appendText("Manual Mode diActivated !\n");
+        }
+
     }
     //Draws an airplane on the map according to its position of flight
     public void drawAirplane(){
@@ -370,7 +425,7 @@ public class FlightController implements Initializable, Observer {
             lastY=airplaneY.getValue()*-1;
             gc.clearRect(0,0,W,H);
 
-            if(heading.getValue()>=0&&heading.getValue()<39)
+            if(heading.getValue()>=0&&heading.getValue()<39) 
                 gc.drawImage(plane[0], w*lastX, lastY*h, 25, 25);
             if(heading.getValue()>=39&&heading.getValue()<80)
                 gc.drawImage(plane[1], w*lastX, lastY*h, 25, 25);
@@ -436,17 +491,21 @@ public class FlightController implements Initializable, Observer {
             }
             move=solution[i];
         }
-
-
-
     }
     //Event - pressing on the map
     EventHandler<MouseEvent> mapClick = new EventHandler<MouseEvent>() {
         @Override
         public void handle(MouseEvent e) {
-            markSceneX.setValue(e.getX());
-            markSceneY.setValue(e.getY());
-            drawMark();
+        	if(mapOn) {
+	            markSceneX.setValue(e.getX());
+	            markSceneY.setValue(e.getY());
+	            drawMark();
+        	}
+        	else
+        	{
+        		System.out.println("You didnt load the map!");
+        		logBar.appendText("You didnt load the map!\n");
+        	}
         }
     };
     //Event - Pressing on the joystick
@@ -462,7 +521,6 @@ public class FlightController implements Initializable, Observer {
                 }
             };
     //Event - Dragging the joystick
-    //Event - Dragging the joystick
     EventHandler<MouseEvent> joystickMove =
             new EventHandler<MouseEvent>() {
 
@@ -476,7 +534,6 @@ public class FlightController implements Initializable, Observer {
                 	}
                 }
             };
-    //Event - Releasing the joystick
     //Event - Releasing the joystick
     EventHandler<MouseEvent> joystickRelease = new EventHandler<MouseEvent>() {
                 @Override
