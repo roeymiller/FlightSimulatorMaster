@@ -2,13 +2,11 @@ package model;
 
 import model.interpreter.interpret.*;
 
-@SuppressWarnings("rawtypes")
 public class InterpreterModel {
     AutoPilotParser parser;
-	Lexer lexer;
+    Lexer lexer;
 
-    @SuppressWarnings("unchecked")
-   public InterpreterModel() {
+    public InterpreterModel() {
         String[] start= {
                 "openDataServer 5400 10",
                 "connect 127.0.0.1 5402",
@@ -28,6 +26,7 @@ public class InterpreterModel {
                 "var altr = 2000",
                 "var e=0",
                 "var r=0"
+
         };
         lexer=new CompLexer(start);
         parser=new AutoPilotParser(new CompParser(lexer.lexicalCheck()));
@@ -41,14 +40,15 @@ public class InterpreterModel {
         }
         AutoPilotParser.stop=true;
     }
-	@SuppressWarnings("unchecked")
-   public void interpet(String[] list){
+
+    public void interpet(String[] list){
        lexer=new CompLexer(list);
        parser.add(lexer.lexicalCheck());
        parser.parse();
    }
    public void execute()
    {
+      
        if(parser.i!=0)
            parser.i--;
        parser.Continue();

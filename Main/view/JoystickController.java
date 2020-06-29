@@ -16,6 +16,7 @@ public class JoystickController {
     double orgTranslateX, orgTranslateY;
     boolean manual;
     
+
 	public JoystickController(Circle innerCircle, Circle outerCircle, Slider rudder, Slider throttle,ViewModel viewModel) {
 	    this.viewModel=viewModel;
 		this.Joystick = innerCircle;
@@ -28,20 +29,20 @@ public class JoystickController {
         elevator.bindBidirectional(viewModel.elevator);
 		orgSceneX = orgSceneY = 0;
 	}
-	// When inner circle is released event handler
-	public void innerReleased(MouseEvent e) {              	 
+
+	public void innerReleased(MouseEvent e) {              	// When inner circle is released event handler 
 		  ((Circle)(e.getSource())).setTranslateX(orgTranslateX);
           ((Circle)(e.getSource())).setTranslateY(orgTranslateY);
 	}
-	// When inner circle is pressed event handler
-	public void innerPressed(MouseEvent e) {				 
+
+	public void innerPressed(MouseEvent e) {				// When inner circle is pressed event handler 
 		 orgSceneX = e.getSceneX();
          orgSceneY = e.getSceneY();
          orgTranslateX = ((Circle)(e.getSource())).getTranslateX();
          orgTranslateY = ((Circle)(e.getSource())).getTranslateY();
 	}
-	//When inner circle is dragged event handler
-	public void innerDragged(MouseEvent e) {				 
+
+	public void innerDragged(MouseEvent e) {				// When inner circle is dragged event handler 
 
 		   double offsetX = e.getSceneX() - orgSceneX;
            double offsetY = e.getSceneY() - orgSceneY;
@@ -57,8 +58,7 @@ public class JoystickController {
                }
            }
 	}
-   
-	private  boolean isInCircle(double x,double y){
+    private  boolean isInCircle(double x,double y){
         return (Math.pow((x-border.getCenterX()),2)+Math.pow((y-border.getCenterY()),2))<=Math.pow(border.getRadius()-Joystick.getRadius(),2);
     }
     private double normalizationX(double num){

@@ -9,18 +9,16 @@ import java.util.Stack;
 import model.interpreter.commands.*;
 import model.interpreter.Var;
 
-@SuppressWarnings("rawtypes")
 public class CompParser implements Parser {
     private HashMap<String, CommandExpression> commandTable=new HashMap<>();
-	private GenericFactory commandFactory=new GenericFactory();
+    private GenericFactory commandFactory=new GenericFactory();
     public static HashMap<String,Var> symbolTable;
     public ArrayList<String[]> lines;
     public ArrayList<CommandExpression> comds;
     public static double returnValue;
     public static ArrayList<String> vars;
 
-    @SuppressWarnings("unchecked")
-	public CompParser(ArrayList<String[]> lines) {
+    public CompParser(ArrayList<String[]> lines) {
 
         this.comds=new ArrayList<>();
         this.lines = lines;

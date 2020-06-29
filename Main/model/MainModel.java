@@ -1,5 +1,9 @@
 package model;
 
+
+
+
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,47 +12,42 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
+
+
 import model.interpreter.interpret.*;
 
-@SuppressWarnings("unused")
 public class MainModel extends Observable implements Observer {
-	// -------------- Server Data Members ----------------- //
-    private static Socket socketPath;
-    private  static PrintWriter outPath;
-    private  static BufferedReader in;
-    
+    private SimulatorModel simulatorClient;
     public static volatile boolean stop=false;
     public static volatile boolean turn=true;
     public static volatile boolean head=false;
-
-	// -------------- Plane Data Members ----------------- //
+    private InterpreterModel interpreter;
+    private static Socket socketPath;
+    private  static PrintWriter outPath;
+    private  static BufferedReader in;
     double startX;
     double startY;
     double planeX;
     double planeY;
-    double currentlocationX;
-    double currentlocationY;
-    double currentHeading;
-    
-	// -------------- Map Data Members ----------------- //
     double markX;
     double markY;
     int[][] data;
     double offset;
-    
-	// -------------- Soultion Data Members ----------------- //
+    double currentlocationX;
+    double currentlocationY;
+    double currentHeading;
     ArrayList<String[]> intersections=new ArrayList<>();
     Thread route;
     Thread rudder;
     int indexPlan=0;
-    public interface Turn {
-        double Do(double x);
-       }
 
     public MainModel() {
+        simulatorClient=new SimulatorModel();
+        interpreter=new InterpreterModel();
         route=new Thread(()->{this.routeStart();});
         rudder=new Thread(()->{this.rudderStart();});
     }
+
     public void GetPlane(double startX,double startY, double offset){
         this.offset=offset;
         this.startX=startX;
@@ -103,6 +102,21 @@ public class MainModel extends Observable implements Observer {
 
             }).start();
         }
+
+    public void parse(String[] script){
+        interpreter.interpet(script);
+    }
+
+    public void execute()
+    {
+        interpreter.execute();
+    }
+
+    public void stopAutoPilot()
+    {
+        interpreter.stop();
+    }
+
     public void connectPath(String ip,int port){
         try {
             socketPath=new Socket(ip,port);
@@ -112,6 +126,16 @@ public class MainModel extends Observable implements Observer {
             e.printStackTrace();
         }
     }
+
+    public void connectManual(String ip,int port){
+        simulatorClient.Connect(ip,port);
+    }
+
+    public void send(String[] data)
+    {
+        simulatorClient.Send(data);
+    }
+
     public void findPath(int planeX,int planeY,int markX,int markY,int[][] data)
     {
         this.planeX=planeX;
@@ -134,22 +158,22 @@ public class MainModel extends Observable implements Observer {
                 outPath.println(planeX+","+planeY);
                 outPath.println(markX+","+markY);
                 outPath.flush();
-                String theSolution = null;
+                String usol = null;
                 try {
-                    theSolution = in.readLine();
+                    usol = in.readLine();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 System.out.println("The Solution received is:");
-                System.out.println(theSolution);
-                String[]tmp=theSolution.split(",");
+                System.out.println(usol);
+                String[]tmp=usol.split(",");
 
-                String[] notify=new String[tmp.length+1];
-                notify[0]="path";
+                String[] notfiy=new String[tmp.length+1];
+                notfiy[0]="path";
                 for(i=0;i<tmp.length;i++)
-                    notify[i+1]=tmp[i];
+                    notfiy[i+1]=tmp[i];
                 this.setChanged();
-                this.notifyObservers(notify);
+                this.notifyObservers(notfiy);
                 this.buildFlyPlan(tmp);
                 if(!route.isAlive())
                     route.start();
@@ -162,7 +186,7 @@ public class MainModel extends Observable implements Observer {
         }).start();
     }
 
-	private void rudderStart()
+    private void rudderStart()
     {
         while(!head &&indexPlan<intersections.size()) {
             boolean flag;
@@ -398,6 +422,10 @@ public class MainModel extends Observable implements Observer {
         }
         return degree;
     }
+    public interface Turn {
+     double Do(double x);
+    }
+
     public void makeTurn(Turn t,double heading,double currentHeading)
     {
         double minus=Math.abs(heading-currentHeading);
@@ -430,6 +458,7 @@ public class MainModel extends Observable implements Observer {
             tmp=360+tmp;
         return  tmp;
     }
+
     public void stopAll()
     {
         MainModel.stop=true;
@@ -443,10 +472,12 @@ public class MainModel extends Observable implements Observer {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        simulatorClient.stop();
         AutoPilotParser.thread1.interrupt();
         AutoPilotParser.close=true;
         MainModel.turn=true;
     }
+
     @Override
     public void update(Observable o, Object arg) {
     	//TODO nothing

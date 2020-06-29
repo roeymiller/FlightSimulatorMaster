@@ -1,36 +1,28 @@
 package view;
 
 import javafx.beans.property.*;
-import model.InterpreterModel;
 import model.MainModel;
-import model.SimulatorModel;
+
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Scanner;
 
 public class ViewModel extends Observable implements Observer {
-	// -------------- Models Members ----------------- //
 	private  MainModel mainModel;
-	private  InterpreterModel interpreterModel;
-	private SimulatorModel simulatorModel;
-	
-	// -------------- Airplane Properties ----------------- //
 	public DoubleProperty throttle;
     public DoubleProperty rudder;
     public DoubleProperty aileron;
     public DoubleProperty elevator;
-    public DoubleProperty heading;
-    public DoubleProperty airplaneX;
-    public DoubleProperty airplaneY;
-    
-	// -------------- Map Properties ----------------- //
     public StringProperty ip;
     public StringProperty port;
+    public DoubleProperty airplaneX;
+    public DoubleProperty airplaneY;
     public DoubleProperty startX;
     public DoubleProperty startY;
     public DoubleProperty offset;
     public StringProperty script;
+    public DoubleProperty heading;
     public DoubleProperty markSceneX, markSceneY;
     public BooleanProperty path;
     private int data[][];
@@ -52,6 +44,7 @@ public class ViewModel extends Observable implements Observer {
         markSceneX=new SimpleDoubleProperty();
         markSceneY=new SimpleDoubleProperty();
         path=new SimpleBooleanProperty();
+
     }
 
     public void setData(int[][] data)
@@ -59,32 +52,34 @@ public class ViewModel extends Observable implements Observer {
         this.data = data;
         mainModel.GetPlane(startX.getValue(),startY.doubleValue(),offset.getValue());
     }
-    public void setModels(MainModel model,SimulatorModel simulatorModel){
+
+    public void setModel(MainModel model){
         this.mainModel=model;
-        this.simulatorModel=simulatorModel;
-        this.interpreterModel=new InterpreterModel();
+
     }
+
     public void setThrottle(){
         String[] data={"set /controls/engines/current-engine/throttle "+throttle.getValue()};
-        simulatorModel.Send(data);
+        mainModel.send(data);
     }
+
     public void setRudder(){
         String[] data={"set /controls/flight/rudder "+rudder.getValue()};
-        simulatorModel.Send(data);
+        mainModel.send(data);
     }
+
     public void setJoystick(){
         String[] data = {
                 "set /controls/flight/aileron " + aileron.getValue(),
                 "set /controls/flight/elevator " + elevator.getValue(),
         };
-        simulatorModel.Send(data);
+        mainModel.send(data);
     }
-    public void connectManual(String ip,int port){
-    	simulatorModel.Connect(ip,port);
-    }
+
     public void connect(){
-    	simulatorModel.Connect(ip.getValue(),Integer.parseInt(port.getValue()));
+        mainModel.connectManual(ip.getValue(),Integer.parseInt(port.getValue()));
     }
+
     public void parse(){
         Scanner scanner=new Scanner(script.getValue());
         ArrayList<String> list=new ArrayList<>();
@@ -97,15 +92,20 @@ public class ViewModel extends Observable implements Observer {
         {
             tmp[i]=list.get(i);
         }
-        interpreterModel.interpet(tmp);
+        mainModel.parse(tmp);
     }
+
     public void execute(){
-        interpreterModel.execute();
+        mainModel.execute();
     }
+
     public void stopAutoPilot(){
-        interpreterModel.stop();
+        mainModel.stopAutoPilot();
     }
+
     public void findPath(double h,double w) {
+
+
         if (!path.getValue())
         {
             mainModel.connectPath(ip.getValue(), Integer.parseInt(port.getValue()));
@@ -113,11 +113,7 @@ public class ViewModel extends Observable implements Observer {
         mainModel.findPath((int) (airplaneY.getValue()/-1), (int) (airplaneX.getValue() +15),Math.abs( (int) (markSceneY.getValue() / h)) ,
                Math.abs((int) (markSceneX.getValue() / w)), data );
     }
-    public void stopAll()
-    {
-    	simulatorModel.stop();
-    	mainModel.stopAll();
-    }
+
     @Override
     public void update(Observable o, Object arg) {
         if(o==mainModel)

@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
+import model.interpreter.commands.*;
 import model.interpreter.expressions.*;
 import model.interpreter.interpret.*;
 import model.server.network.*;
@@ -21,7 +22,6 @@ public class OpenServerCommend implements Command {
 
 		s=new MySerialServer();
 		s.open(Integer.parseInt(array[1]), new ClientHandler() {
-			
 			@Override
 			public void handleClient(InputStream in, OutputStream out) {
 				BufferedReader Bin=new BufferedReader(new InputStreamReader(in));

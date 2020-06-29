@@ -10,6 +10,7 @@ public class MapController extends Canvas {
     double min=Double.MAX_VALUE;
     double max=0;
 
+
     public void setMapData(int[][] mapData) {
         this.mapData = mapData;
 
@@ -30,6 +31,7 @@ public class MapController extends Canvas {
             }
         redraw();
     }
+
     public void redraw(){
         if(mapData!=null){
             double H=getHeight();
@@ -46,5 +48,7 @@ public class MapController extends Canvas {
                     gc.fillRect(j*w,i*h,w,h);
                 }
         }
-    } 
+    }
+    
+    
 }
